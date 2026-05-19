@@ -1,5 +1,113 @@
 # Changelog
 
+## [v2.1.143] — 2026-05-19
+
+### Synced to Claude Code v2.1.143
+
+Bumps tutorial coverage from Claude Code v2.1.138 → v2.1.143 (May 15, 2026
+release). Anthropic shipped five patches (v2.1.139–v2.1.143) since the last
+sync. Highlights: `/goal` and `/scroll-speed` slash commands, the `claude
+agents` Agent View (Research Preview) with a full dispatch flag set, a Stop
+hook safety cap, hook exec form (`args`), `continueOnBlock` for PostToolUse,
+hook `terminalSequence` output, Fast Mode defaulting to Opus 4.7,
+PowerShell-by-default on Windows for Bedrock/Vertex/Foundry, and the
+`worktree.bgIsolation` setting.
+
+### Added
+
+- `/goal <statement>` slash command (v2.1.139) — registers a session-level
+  completion condition with a live overlay panel showing elapsed time, turn
+  count, and token usage. Documented in `01-slash-commands/README.md` and
+  cross-linked from `10-cli/README.md`.
+- `/scroll-speed <±N>` slash command (v2.1.139) — tunes TUI live-preview
+  scroll speed; persists per-machine. Documented in
+  `01-slash-commands/README.md`.
+- `claude agents` Agent View (Research Preview, v2.1.139) with dispatch flags
+  `--cwd` (v2.1.141), `--add-dir`, `--settings`, `--mcp-config`,
+  `--plugin-dir`, `--permission-mode`, `--model`, `--effort`,
+  `--dangerously-skip-permissions` (v2.1.142). Documented in
+  `10-cli/README.md`.
+- `claude plugin details <name>` (v2.1.139) — full plugin inventory plus
+  projected per-turn/per-invocation token-cost estimate. LSP servers added
+  to the details pane in v2.1.142. Documented in `07-plugins/README.md`.
+- Marketplace context-cost projection in the `/plugin` browse pane (v2.1.143).
+  Documented in `07-plugins/README.md`.
+- Hook **exec form** (`args: string[]`, v2.1.139) — direct `execve()` spawn
+  with no shell parsing; mutually exclusive with the shell-form `command`
+  field. Documented in `06-hooks/README.md`.
+- Hook `continueOnBlock: true` field on PostToolUse (v2.1.139) — surfaces a
+  blocked tool result back to Claude as a `tool_result` instead of aborting
+  the turn. Documented in `06-hooks/README.md`.
+- Hook `terminalSequence` JSON output field (v2.1.141) — emits raw OSC escape
+  sequences for desktop notifications, window titles, and bells. Documented
+  in `06-hooks/README.md`.
+- `worktree.bgIsolation: "none"` setting (v2.1.143) — background sessions
+  edit the current working copy directly instead of an isolated worktree.
+  Documented in `09-advanced-features/README.md`.
+- `CLAUDE_PROJECT_DIR` is now passed to every MCP stdio server's environment
+  (v2.1.139), and `${CLAUDE_PROJECT_DIR}` substitution is supported in plugin
+  and project `.mcp.json` `command`/`args`/`env` fields. Documented in
+  `05-mcp/README.md`.
+- Subagent OTEL headers `x-claude-code-agent-id` and
+  `x-claude-code-parent-agent-id` (v2.1.139), exposed as
+  `agent_id` / `parent_agent_id` attributes on `claude_code.llm_request`
+  OTEL spans. Documented in `04-subagents/README.md`.
+- `CLAUDE_CODE_OPUS_4_6_FAST_MODE_OVERRIDE=1` (v2.1.142) — pin Fast Mode back
+  to Opus 4.6 after the v2.1.142 default flipped to Opus 4.7. Documented in
+  `10-cli/README.md`.
+- `CLAUDE_CODE_USE_POWERSHELL_TOOL=0` and
+  `CLAUDE_CODE_POWERSHELL_RESPECT_EXECUTION_POLICY=1` (v2.1.143) — opt out of
+  the default-on PowerShell tool, or make it honor the system execution
+  policy instead of `-ExecutionPolicy Bypass`. Documented in
+  `09-advanced-features/README.md`.
+- `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` (v2.1.143) — override the 8-consecutive-
+  blocks safety cap for Stop hooks (set `0` to disable). Documented in
+  `06-hooks/README.md` and `09-advanced-features/README.md`.
+- `CLAUDE_CODE_PLUGIN_PREFER_HTTPS=1` (v2.1.141) — force plugin installs to
+  clone GitHub plugin sources over HTTPS for CI runners without SSH keys.
+  Documented in `07-plugins/README.md`.
+- `ANTHROPIC_WORKSPACE_ID` (v2.1.141) — scopes a federated workload-identity
+  token to a specific workspace. Documented in `09-advanced-features/README.md`.
+- Root-level `SKILL.md` plugin pattern (v2.1.142) — a plugin with only a
+  top-level `SKILL.md` (no `skills/` subdirectory) is surfaced as a single
+  skill. Documented in `07-plugins/README.md`.
+- Plugins marketing name **Routines** for `/schedule` (Anthropic blog,
+  2026-05-14) — surfaced as a one-line note in
+  `09-advanced-features/README.md`; the CLI surface remains `/schedule`.
+
+### Behavior changes
+
+- **Fast Mode default flipped to Opus 4.7 (v2.1.142)**: `/fast` now runs Opus
+  4.7 by default (was Opus 4.6). Set `CLAUDE_CODE_OPUS_4_6_FAST_MODE_OVERRIDE=1`
+  to opt back in.
+- **PowerShell tool enabled by default on Windows for Bedrock/Vertex/Foundry
+  (v2.1.143)**: Claude Code invokes PowerShell with `-ExecutionPolicy Bypass`.
+  Opt out with `CLAUDE_CODE_POWERSHELL_RESPECT_EXECUTION_POLICY=1` (honor
+  system policy) or `CLAUDE_CODE_USE_POWERSHELL_TOOL=0` (disable the tool).
+- **Remote Control, `/schedule`, claude.ai MCP connectors, and notification
+  preferences auto-disabled when API-key auth is set (v2.1.139)**: setting
+  `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, or `apiKeyHelper` disables all
+  four claude.ai-bridged surfaces, even if a claude.ai login is also active.
+- **Stop hook block loops capped at 8 consecutive blocks (v2.1.143)**: the
+  session ends with a warning after 8 in a row, preventing buggy Stop hooks
+  from looping the session forever. Override with
+  `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`.
+- **`subagent_type` matching is now case- and separator-insensitive (v2.1.140)**:
+  `code-reviewer`, `Code Reviewer`, and `code_reviewer` all resolve to the
+  same agent. Documented in `04-subagents/README.md`.
+
+### Changed
+
+- Root reference docs (`README.md`, `CATALOG.md`) updated from `28 hook
+  events` to `29 hook events` — matches `06-hooks/README.md` and
+  `LEARNING-ROADMAP.md` after the `Setup` hook landed in v2.1.138.
+
+### Notes for translators
+
+- Tutorial translations (`vi/`, `ja/`, `uk/`, `zh/`) follow English; sync
+  this round's deltas in module READMEs and the CHANGELOG above. Footers
+  must reflect `Last Updated: May 19, 2026` and `Claude Code Version: 2.1.143`.
+
 ## [v2.1.138] — 2026-05-09
 
 ### Synced to Claude Code v2.1.138

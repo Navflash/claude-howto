@@ -51,7 +51,7 @@ The older JavaScript bundle is still produced for Windows and for environments t
 | `/doctor` (slash command) | Diagnose installation, config, and plugin health. Since v2.1.116 it can be opened **while Claude is responding**, shows status icons inline, and accepts the `f` keypress to auto-fix detected issues | run `/doctor` inside the REPL |
 | `claude mcp` | Configure MCP servers | See [MCP documentation](../05-mcp/) |
 | `claude mcp serve` | Run Claude Code as an MCP server | `claude mcp serve` |
-| `claude agents` | List all configured subagents | `claude agents` |
+| `claude agents` | Open the **Agent View** (Research Preview, v2.1.139+) — multi-session manager listing every Claude Code session with its status. See [Agent View](#agent-view-claude-agents-v21139) below. | `claude agents` |
 | `claude auto-mode defaults` | Print auto mode default rules as JSON | `claude auto-mode defaults` |
 | `claude remote-control` | Start Remote Control server | `claude remote-control` |
 | `claude plugin` | Manage plugins (install, enable, disable) | `claude plugin install my-plugin` |
@@ -462,6 +462,33 @@ When multiple agent definitions exist, they are loaded in this priority order:
 
 CLI-defined agents override both project and user agents for the session. Project-level agents override user-level agents when their names collide. See [Lesson 04 — Subagents](../04-subagents/README.md#file-locations) for the full priority table including plugin-level agents.
 
+### Agent View (`claude agents`, v2.1.139+)
+
+> **Research Preview** — feature is stable enough for daily use but may change.
+
+`claude agents` opens the **Agent View** — a single list of every Claude Code session on the machine with its current status (`running`, `blocked on you`, `done`). It is the replacement for juggling multiple terminal tabs when you run background agents, scheduled tasks, or `--bg`-launched sessions.
+
+```bash
+# Open the Agent View
+claude agents
+```
+
+When you dispatch a session from the view (or via `claude --bg <prompt>`), you can pass the same configuration flags you would pass to `claude` itself. Flags introduced for the Agent View dispatch path:
+
+| Flag | Since | Description |
+|------|-------|-------------|
+| `--cwd <path>` | v2.1.141 | Scope the session list (or new session) to a specific working directory |
+| `--add-dir <path>` | v2.1.142 | Add directories to the dispatched session's workspace |
+| `--settings <path>` | v2.1.142 | Use a specific `settings.json` for the dispatched session |
+| `--mcp-config <path>` | v2.1.142 | Use a specific MCP config for the dispatched session |
+| `--plugin-dir <path>` | v2.1.142 | Use a specific plugin directory for the dispatched session |
+| `--permission-mode <mode>` | v2.1.142 | Set permission mode (`plan`, `acceptEdits`, `auto`, etc.) for the dispatched session |
+| `--model <model>` | v2.1.142 | Pin a model for the dispatched session |
+| `--effort <level>` | v2.1.142 | Pin an effort level (`low`/`medium`/`high`/`xhigh`/`max`) |
+| `--dangerously-skip-permissions` | v2.1.142 | Run the dispatched session without permission prompts (use only in sandboxes) |
+
+Sessions that finish their work but leave a background shell open move from "Working" to "Completed" (v2.1.141 fix). Within an attached agent session, `Shift+Tab` cycles through permission modes including auto mode (v2.1.143).
+
 ---
 
 ## High-Value Use Cases
@@ -736,6 +763,8 @@ claude --model opusplan "design and implement the API"
 /fast
 ```
 
+> **Fast Mode default flipped to Opus 4.7 (v2.1.142)**: As of v2.1.142, `/fast` runs Opus 4.7 by default (was Opus 4.6 before). To opt back into Opus 4.6 for Fast Mode, export `CLAUDE_CODE_OPUS_4_6_FAST_MODE_OVERRIDE=1`.
+
 ### Effort Levels (Opus 4.7)
 
 Opus 4.7 supports adaptive reasoning with effort levels, ordered from lightest to heaviest: `low` (○), `medium` (◐), `high` (●), `xhigh` (default on Claude Code since Opus 4.7 launch, 2026-04-16), and `max` (Opus 4.7 only). On Opus 4.6 / Sonnet 4.6, the default effort for Pro/Max subscribers was raised from `medium` to `high` in v2.1.117.
@@ -801,6 +830,7 @@ The "ultrathink" keyword in prompts activates deep reasoning. The `max` effort l
 | `CLAUDE_CODE_FORCE_SYNC_OUTPUT` | Set to `1` to force synchronous output for terminals where auto-detection misses (e.g., Emacs `eat`) (v2.1.129+) |
 | `CLAUDE_CODE_PACKAGE_MANAGER_AUTO_UPDATE` | Set to `1` to enable background upgrades for Homebrew/WinGet installs (which normally do not auto-update) (v2.1.129+) |
 | `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY` | Set to `1` to opt in to gateway `/v1/models` discovery when `ANTHROPIC_BASE_URL` is set. Without it, `/model` shows the built-in static list (v2.1.129+) |
+| `CLAUDE_CODE_OPUS_4_6_FAST_MODE_OVERRIDE` | Set to `1` to pin Fast Mode (`/fast`) back to Opus 4.6. The default flipped to Opus 4.7 in v2.1.142. |
 
 > **`ENABLE_TOOL_SEARCH` on Vertex AI (v2.1.119+)**: Tool search is **disabled by default on Google Cloud Vertex AI** deployments. Users who want the tool-search capability on Vertex must explicitly opt in with `export ENABLE_TOOL_SEARCH=true`. On direct Anthropic API it remains enabled by default.
 
@@ -908,8 +938,8 @@ claude -p --output-format json "query"
 
 ---
 
-**Last Updated**: May 9, 2026
-**Claude Code Version**: 2.1.138
+**Last Updated**: May 19, 2026
+**Claude Code Version**: 2.1.143
 **Sources**:
 - https://code.claude.com/docs/en/cli-reference
 - https://code.claude.com/docs/en/settings
@@ -921,4 +951,8 @@ claude -p --output-format json "query"
 - https://github.com/anthropics/claude-code/releases/tag/v2.1.118
 - https://github.com/anthropics/claude-code/releases/tag/v2.1.131
 - https://github.com/anthropics/claude-code/releases/tag/v2.1.138
+- https://github.com/anthropics/claude-code/releases/tag/v2.1.139
+- https://github.com/anthropics/claude-code/releases/tag/v2.1.141
+- https://github.com/anthropics/claude-code/releases/tag/v2.1.142
+- https://github.com/anthropics/claude-code/releases/tag/v2.1.143
 **Compatible Models**: Claude Sonnet 4.6, Claude Opus 4.7, Claude Haiku 4.5

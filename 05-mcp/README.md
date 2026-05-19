@@ -97,6 +97,27 @@ claude mcp add --transport stdio myserver -- npx @myorg/mcp-server
 claude mcp add --transport stdio myserver --env KEY=value -- npx server
 ```
 
+#### `CLAUDE_PROJECT_DIR` for stdio servers (v2.1.139+)
+
+Every MCP stdio server is spawned with `CLAUDE_PROJECT_DIR=<absolute path to repo root>` already set in its environment — the same convention used for hooks. Plugin and project `.mcp.json` files can reference `${CLAUDE_PROJECT_DIR}` in the `command`, `args`, and `env` values, and the substitution happens before `execve()`:
+
+```json
+{
+  "mcpServers": {
+    "repo-tools": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${CLAUDE_PROJECT_DIR}/.claude/mcp/repo-tools.js"],
+      "env": {
+        "REPO_ROOT": "${CLAUDE_PROJECT_DIR}"
+      }
+    }
+  }
+}
+```
+
+Use this when your stdio server needs to read files relative to the project root regardless of where Claude Code was launched.
+
 ### SSE Transport (Deprecated)
 
 Server-Sent Events transport is deprecated in favor of `http` but still supported:
@@ -1146,10 +1167,11 @@ export GITHUB_TOKEN="your_token"
 
 ---
 
-**Last Updated**: May 9, 2026
-**Claude Code Version**: 2.1.138
+**Last Updated**: May 19, 2026
+**Claude Code Version**: 2.1.143
 **Sources**:
 - https://code.claude.com/docs/en/mcp
 - https://code.claude.com/docs/en/changelog
 - https://github.com/anthropics/claude-code/releases/tag/v2.1.117
+- https://github.com/anthropics/claude-code/releases/tag/v2.1.139
 **Compatible Models**: Claude Sonnet 4.6, Claude Opus 4.7, Claude Haiku 4.5
